@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zeno AI — by Barakat & Co.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #07090c;
+    --panel: #0d1116;
+    --panel-2: #10151b;
+    --line: #1c2228;
+    --text: #eef2f3;
+    --muted: #7a8790;
+    --cyan: #4fe8d3;
+    --violet: #8a7dfb;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    display:flex;
+    min-height:100vh;
+    overflow:hidden;
+  }
+  ::-webkit-scrollbar{width:6px;}
+  ::-webkit-scrollbar-thumb{background:#242c33; border-radius:6px;}
+
+  /* Sidebar */
+  .sidebar{
+    width:260px;
+    min-width:260px;
+    background:var(--panel);
+    border-right:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    padding:16px 12px;
+  }
+  .brand-row{
+    display:flex; align-items:center; gap:10px;
+    padding:8px 6px 18px;
+  }
+  .brand-mark{
+    width:30px; height:30px; border-radius:8px;
+    background:linear-gradient(135deg, var(--cyan), var(--violet));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700; font-size:14px; color:#07090c;
+  }
+  .brand-text{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700; font-size:15px;
+  }
+  .brand-text small{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    color:var(--muted);
+    font-weight:400;
+    letter-spacing:0.02em;
+  }
+
+  .new-chat-btn{
+    display:flex; align-items:center; gap:8px;
+    width:100%;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    font-size:13px; font-weight:500;
+    padding:10px 12px;
+    border-radius:10px;
+    cursor:pointer;
+    margin-bottom:16px;
+    transition:border-color 0.2s;
+  }
+  .new-chat-btn:hover{border-color:var(--cyan);}
+
+  .history-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.08em;
+    color:var(--muted);
+    text-transform:uppercase;
+    padding:6px 8px;
+  }
+  .history-item{
+    padding:9px 10px;
+    border-radius:8px;
+    font-size:13px;
+    color:#c4ccd0;
+    cursor:pointer;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    margin-bottom:2px;
+  }
+  .history-item:hover{background:var(--panel-2);}
+  .history-item.active{background:var(--panel-2); color:var(--cyan);}
+
+  .sidebar-footer{
+    margin-top:auto;
+    border-top:1px solid var(--line);
+    padding-top:12px;
+  }
+  .login-btn{
+    display:flex; align-items:center; gap:10px;
+    width:100%;
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    font-size:13px; font-weight:500;
+    padding:10px 12px;
+    border-radius:10px;
+    cursor:pointer;
+    transition: all 0.2s;
+  }
+  .login-btn:hover{
+    border-color:var(--cyan);
+    background:rgba(79,232,211,0.06);
+  }
+  .avatar-circle{
+    width:22px; height:22px; border-radius:50%;
+    background:linear-gradient(135deg, var(--violet), var(--cyan));
+    flex-shrink:0;
+  }
+
+  /* Main */
+  .main{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    height:100vh;
+    position:relative;
+  }
+  .grid-overlay{
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 56px 56px;
+    pointer-events:none;
+    mask-image: radial-gradient(circle at 50% 0%, black, transparent 70%);
+  }
+
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 24px;
+    border-bottom:1px solid var(--line);
+    position:relative; z-index:2;
+  }
+  .model-pill{
+    display:flex; align-items:center; gap:8px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--muted);
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    padding:6px 12px;
+    border-radius:999px;
+  }
+  .model-pill .dot{
+    width:6px; height:6px; border-radius:50%;
+    background:var(--cyan);
+    box-shadow:0 0 8px 1px rgba(79,232,211,0.6);
+  }
+  .owner-tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+  }
+
+  .chat-area{
+    flex:1;
+    overflow-y:auto;
+    position:relative; z-index:2;
+    padding:32px 0 12px;
+  }
+  .chat-inner{
+    max-width:720px;
+    margin:0 auto;
+    padding:0 24px;
+  }
+
+  .empty-state{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    height:100%;
+    padding-top:14vh;
+  }
+  .empty-mark{
+    width:56px; height:56px; border-radius:16px;
+    background:linear-gradient(135deg, var(--cyan), var(--violet));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700; font-size:22px; color:#07090c;
+    margin-bottom:20px;
+  }
+  .empty-state h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:28px;
+    margin-bottom:8px;
+  }
+  .empty-state p{
+    color:var(--muted);
+    font-size:14px;
+    max-width:38ch;
+  }
+  .suggestions{
+    display:flex; flex-wrap:wrap; gap:10px;
+    justify-content:center;
+    margin-top:28px;
+    max-width:560px;
+  }
+  .suggestion-chip{
+    font-family:'Inter', sans-serif;
+    font-size:12.5px;
+    color:#c4ccd0;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    padding:9px 14px;
+    border-radius:10px;
+    cursor:pointer;
+    transition:border-color 0.2s;
+  }
+  .suggestion-chip:hover{border-color:var(--cyan); color:var(--cyan);}
+
+  .msg{
+    display:flex;
+    gap:12px;
+    margin-bottom:26px;
+    align-items:flex-start;
+  }
+  .msg.user{flex-direction:row-reverse;}
+  .msg-avatar{
+    width:28px; height:28px; border-radius:8px;
+    flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700; font-size:11px;
+  }
+  .msg.ai .msg-avatar{
+    background:linear-gradient(135deg, var(--cyan), var(--violet));
+    color:#07090c;
+  }
+  .msg.user .msg-avatar{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--muted);
+  }
+  .msg-bubble{
+    font-size:14.5px;
+    line-height:1.65;
+    padding:12px 16px;
+    border-radius:14px;
+    max-width:75%;
+  }
+  .msg.ai .msg-bubble{
+    background:var(--panel);
+    border:1px solid var(--line);
+  }
+  .msg.user .msg-bubble{
+    background:linear-gradient(135deg, rgba(79,232,211,0.12), rgba(138,125,251,0.10));
+    border:1px solid rgba(79,232,211,0.2);
+  }
+  .msg-name{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    color:var(--muted);
+    letter-spacing:0.05em;
+    margin-bottom:5px;
+  }
+
+  .typing{
+    display:flex; gap:4px; align-items:center;
+    padding:4px 0;
+  }
+  .typing span{
+    width:5px; height:5px; border-radius:50%;
+    background:var(--cyan);
+    animation: bounce 1.2s infinite ease-in-out;
+  }
+  .typing span:nth-child(2){animation-delay:0.15s;}
+  .typing span:nth-child(3){animation-delay:0.3s;}
+  @keyframes bounce{
+    0%,60%,100%{transform:translateY(0); opacity:0.5;}
+    30%{transform:translateY(-4px); opacity:1;}
+  }
+
+  .input-zone{
+    position:relative; z-index:2;
+    padding:14px 24px 22px;
+  }
+  .input-inner{
+    max-width:720px;
+    margin:0 auto;
+  }
+  .input-box{
+    display:flex;
+    align-items:flex-end;
+    gap:10px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:10px 10px 10px 16px;
+    transition:border-color 0.2s;
+  }
+  .input-box:focus-within{border-color:var(--cyan);}
+  .input-box textarea{
+    flex:1;
+    background:transparent;
+    border:none;
+    outline:none;
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    font-size:14px;
+    line-height:1.5;
+    resize:none;
+    max-height:140px;
+    padding:8px 0;
+  }
+  .input-box textarea::placeholder{color:var(--muted);}
+  .send-btn{
+    width:36px; height:36px;
+    border-radius:10px;
+    background:linear-gradient(135deg, var(--cyan), var(--violet));
+    border:none;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    transition:opacity 0.2s;
+  }
+  .send-btn:disabled{opacity:0.35; cursor:default;}
+  .send-btn svg{width:16px; height:16px;}
+
+  .disclaimer{
+    text-align:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    color:var(--muted);
+    margin-top:10px;
+    letter-spacing:0.01em;
+  }
+
+  /* Login modal */
+  .modal-overlay{
+    position:fixed; inset:0;
+    background:rgba(4,6,8,0.7);
+    display:none;
+    align-items:center; justify-content:center;
+    z-index:50;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{
+    width:min(360px, 90vw);
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:28px 24px;
+  }
+  .modal-mark{
+    width:44px; height:44px; border-radius:12px;
+    background:linear-gradient(135deg, var(--cyan), var(--violet));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700; font-size:18px; color:#07090c;
+    margin-bottom:16px;
+  }
+  .modal h2{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:19px; font-weight:600;
+    margin-bottom:6px;
+  }
+  .modal p{
+    color:var(--muted);
+    font-size:13px;
+    line-height:1.6;
+    margin-bottom:20px;
+  }
+  .modal input{
+    width:100%;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:11px 14px;
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    font-size:13.5px;
+    margin-bottom:10px;
+    outline:none;
+  }
+  .modal input:focus{border-color:var(--cyan);}
+  .modal-submit{
+    width:100%;
+    background:linear-gradient(135deg, var(--cyan), var(--violet));
+    border:none;
+    border-radius:10px;
+    padding:11px;
+    color:#07090c;
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:13.5px;
+    cursor:pointer;
+    margin-top:6px;
+  }
+  .modal-close{
+    position:absolute;
+    top:16px; right:16px;
+    background:none; border:none;
+    color:var(--muted);
+    font-size:18px;
+    cursor:pointer;
+  }
+  .modal{position:relative;}
+
+  @media (max-width:720px){
+    .sidebar{
+      position:fixed; z-index:40; height:100vh;
+      transform:translateX(-100%);
+      transition:transform 0.25s ease;
+    }
+    .sidebar.open{transform:translateX(0);}
+    .menu-btn{display:flex !important;}
+  }
+  .menu-btn{
+    display:none;
+    align-items:center; justify-content:center;
+    width:34px; height:34px;
+    border-radius:8px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--text);
+    cursor:pointer;
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+  <div class="brand-row">
+    <div class="brand-mark">Z</div>
+    <div class="brand-text">Zeno AI<small>BARAKAT & CO.</small></div>
+  </div>
+  <button class="new-chat-btn" onclick="newChat()">
+    <span>+</span> New chat
+  </button>
+  <div class="history-label">Recent</div>
+  <div class="history-item active">Welcome conversation</div>
+  <div class="sidebar-footer">
+    <button class="login-btn" onclick="openModal()">
+      <span class="avatar-circle"></span> Sign in
+    </button>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="grid-overlay"></div>
+
+  <div class="topbar">
+    <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+    <div class="model-pill"><span class="dot"></span> Zeno AI — Demo Mode</div>
+    <div class="owner-tag">by Barakat & Co.</div>
+  </div>
+
+  <div class="chat-area" id="chatArea">
+    <div class="chat-inner">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-mark">Z</div>
+        <h1>Zeno AI</h1>
+        <p>Ask anything. Built by Barakat & Co. — this is a demo interface, not yet connected to a live model.</p>
+        <div class="suggestions">
+          <div class="suggestion-chip" onclick="fillInput('What can you help me with?')">What can you help me with?</div>
+          <div class="suggestion-chip" onclick="fillInput('Tell me about Barakat & Co.')">Tell me about Barakat & Co.</div>
+          <div class="suggestion-chip" onclick="fillInput('Explain something in simple terms')">Explain something simply</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-zone">
+    <div class="input-inner">
+      <div class="input-box">
+        <textarea id="msgInput" rows="1" placeholder="Message Zeno AI..." onkeydown="handleKey(event)" oninput="autoGrow(this)"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#07090c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="19" x2="12" y2="5"></line>
+            <polyline points="6 11 12 5 18 11"></polyline>
+          </svg>
+        </button>
+      </div>
+      <div class="disclaimer">Zeno AI — demo interface. Not yet connected to a live model.</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-mark">Z</div>
+    <h2>Sign in to Zeno AI</h2>
+    <p>Account system coming soon — Barakat & Co. is still building this out.</p>
+    <input type="email" placeholder="Email address" disabled>
+    <input type="password" placeholder="Password" disabled>
+    <button class="modal-submit" onclick="closeModal()">Coming soon</button>
+  </div>
+</div>
+
+<script>
+  const chatArea = document.getElementById('chatArea');
+  const chatInner = chatArea.querySelector('.chat-inner');
+  const emptyState = document.getElementById('emptyState');
+  const input = document.getElementById('msgInput');
+  const sendBtn = document.getElementById('sendBtn');
+
+  const demoResponses = [
+    "This is a demo response from Zeno AI. Once Barakat & Co. connects a live model backend, I'll respond with real, dynamic answers instead of this placeholder.",
+    "Great question. Right now I'm running in demo mode, so my replies are pre-set — but the interface, layout, and flow are fully functional and ready for a real AI connection.",
+    "Thanks for trying Zeno AI. This build is focused on showing off the design and interaction — the actual intelligence gets wired in during the next phase of development.",
+    "I hear you. For now, treat this as a working preview of the experience — sending messages, seeing responses, everything except the live AI reasoning itself."
+  ];
+  let responseIndex = 0;
+
+  function autoGrow(el){
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+    sendBtn.disabled = el.value.trim().length === 0;
+  }
+
+  function handleKey(e){
+    if(e.key === 'Enter' && !e.shiftKey){
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  function fillInput(text){
+    input.value = text;
+    autoGrow(input);
+    input.focus();
+  }
+
+  function newChat(){
+    chatInner.innerHTML = '';
+    chatInner.appendChild(emptyState);
+    input.value = '';
+    autoGrow(input);
+  }
+
+  function addMessage(role, text){
+    if(emptyState.parentNode) emptyState.remove();
+    const msg = document.createElement('div');
+    msg.className = 'msg ' + role;
+    msg.innerHTML = `
+      <div class="msg-avatar">${role === 'ai' ? 'Z' : 'You'}</div>
+      <div>
+        <div class="msg-name">${role === 'ai' ? 'ZENO AI' : 'YOU'}</div>
+        <div class="msg-bubble">${text}</div>
+      </div>
+    `;
+    chatInner.appendChild(msg);
+    chatArea.scrollTop = chatArea.scrollHeight;
+    return msg;
+  }
+
+  function sendMessage(){
+    const text = input.value.trim();
+    if(!text) return;
+    addMessage('user', escapeHtml(text));
+    input.value = '';
+    autoGrow(input);
+
+    const typingMsg = document.createElement('div');
+    typingMsg.className = 'msg ai';
+    typingMsg.innerHTML = `
+      <div class="msg-avatar">Z</div>
+      <div>
+        <div class="msg-name">ZENO AI</div>
+        <div class="msg-bubble"><div class="typing"><span></span><span></span><span></span></div></div>
+      </div>
+    `;
+    chatInner.appendChild(typingMsg);
+    chatArea.scrollTop = chatArea.scrollHeight;
+
+    setTimeout(() => {
+      typingMsg.remove();
+      const reply = demoResponses[responseIndex % demoResponses.length];
+      responseIndex++;
+      addMessage('ai', reply);
+    }, 1100);
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function openModal(){ document.getElementById('modalOverlay').classList.add('open'); }
+  function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); }
+
+  function toggleSidebar(){
+    document.getElementById('sidebar').classList.toggle('open');
+  }
+</script>
+</body>
+</html>
